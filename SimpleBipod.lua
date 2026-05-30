@@ -3,13 +3,13 @@ behaviour("SimpleBipod")
 -- Keys:
 --   raycastDistance              (float)  : Length from BipodObject to the bottom of the legs
 --   detectionDelay               (float)  : Time in seconds the raycast must hit/miss before deploying/undeploying
+--   bipodKickbackProneMultiplier (float)  : Multiplier applied to recoilKickbackProneMultiplier when deployed
+--   bipodSnapProneMultiplier     (float)  : Multiplier applied to recoilSnapProneMultiplier when deployed
+--   bipodSpreadProneMultiplier   (float)  : Multiplier applied to followupSpread.proneMultiplier when deployed
 --   deployParameterName          (string) : Name of the animator trigger parameter for the deploy hand animation
 --   undeployParameterName        (string) : Name of the animator trigger parameter for the fold hand animation
 --   stateValues                  (string) : Two space-separated ints e.g. "0 1" (0 = folded, 1 = deployed)
 --   stateParameterName           (string) : Name of the animator int parameter (holds the physical bipod position)
---   bipodKickbackProneMultiplier (float)  : Multiplier applied to recoilKickbackProneMultiplier when deployed
---   bipodSnapProneMultiplier     (float)  : Multiplier applied to recoilSnapProneMultiplier when deployed
---   bipodSpreadProneMultiplier   (float)  : Multiplier applied to followupSpread.proneMultiplier when deployed
 
 function SimpleBipod:Start()
     self.weapon = self.gameObject.GetComponent(Weapon)
