@@ -1,4 +1,4 @@
-# Simple Bipod
+# SimpleBipod.lua
 This script automatically deploys and folds a bipod based on whether the gun is resting near a surface. When deployed and grounded, it directly applies accuracy bonuses by baking the configured multipliers into the weapon's base kickback, snap, and spread values.
 
 ## Step 1: Component Setup
@@ -36,14 +36,14 @@ Open your Animator's Parameters tab and add three new entries:
 2. A `Trigger` parameter. Name it exactly what you typed in `undeployParameterName`
 3. An `Int` (Integer) parameter. Name it exactly what you typed in `stateParameterName`
 
-## The Physical Bipod Legs
+**The Physical Bipod Legs**
 1. Create a new Animator Layer for the gun's legs. Click the layer's gear icon and set Weight to `1` and Blending to `Additive`
 2. Create two states in this layer: one static animation clip for the Folded position, and one for the Deployed position
 3. Make transition arrows connecting the two states to each other
 4. Click the transition arrow going to the Folded state. Under Conditions, set your Int parameter to Equals your first number (e.g., `0`)
 5. Click the transition arrow going to the Deployed state. Set the condition to Equals your second number (e.g., `1`)
 
-## The Hand Animations
+**The Hand Animations**
 1. In your main animation layer, create two new states: one for your "Deploying Hand" animation, and one for your "Undeploying Hand" animation
 2. Create a transition line from `Any State` into your "Deploying Hand" state
 3. Under Conditions for that transition, add your Deploy Trigger parameter
@@ -51,5 +51,5 @@ Open your Animator's Parameters tab and add three new entries:
 5. Under Conditions for that transition, add your Undeploy Trigger parameter
 6. Create transition lines from both hand animation states back to your standard `Hip State`
 
-## Credits
+**Credits**
 Again huge huge thanks to ProfessionalDebil for the massive help
