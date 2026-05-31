@@ -1,15 +1,15 @@
 behaviour("SimpleBipod")
 
 -- Keys:
---   raycastDistance              (float)  : Length from BipodObject to the bottom of the legs
---   detectionDelay               (float)  : Time in seconds the raycast must hit/miss before deploying/undeploying
---   bipodKickbackProneMultiplier (float)  : Multiplier applied to recoilKickbackProneMultiplier when deployed
---   bipodSnapProneMultiplier     (float)  : Multiplier applied to recoilSnapProneMultiplier when deployed
---   bipodSpreadProneMultiplier   (float)  : Multiplier applied to followupSpread.proneMultiplier when deployed
---   deployParameterName          (string) : Name of the animator trigger parameter for the deploy hand animation
---   undeployParameterName        (string) : Name of the animator trigger parameter for the fold hand animation
---   stateValues                  (string) : Two space-separated ints e.g. "0 1" (0 = folded, 1 = deployed)
---   stateParameterName           (string) : Name of the animator int parameter (holds the physical bipod position)
+--   raycastDistance         (float)  : Length from BipodObject to the bottom of the legs
+--   detectionDelay          (float)  : Time in seconds the raycast must hit/miss before deploying/undeploying
+--   bipodKickbackMultiplier (float)  : Multiplier applied to recoilBaseKickback and recoilRandomKickback when deployed and grounded
+--   bipodSnapMultiplier     (float)  : Multiplier applied to recoilSnapMagnitude when deployed and grounded
+--   bipodSpreadMultiplier   (float)  : Multiplier applied to followupSpread maxSpreadAim and maxSpreadHip when deployed and grounded
+--   deployParameterName     (string) : Name of the animator trigger parameter for the deploy hand animation
+--   undeployParameterName   (string) : Name of the animator trigger parameter for the fold hand animation
+--   stateValues             (string) : Two space-separated ints e.g. "0 1" (0 = folded, 1 = deployed)
+--   stateParameterName      (string) : Name of the animator int parameter (holds the physical bipod position)
 
 function SimpleBipod:Start()
     self.weapon = self.gameObject.GetComponent(Weapon)
@@ -18,10 +18,10 @@ function SimpleBipod:Start()
 
     self.raycastDistance = self.dataContainer.GetFloat("raycastDistance")
     self.detectionDelay = self.dataContainer.GetFloat("detectionDelay")
-    
-    self.bipodKickbackProneMultiplier = self.dataContainer.GetFloat("bipodKickbackProneMultiplier")
-    self.bipodSnapProneMultiplier = self.dataContainer.GetFloat("bipodSnapProneMultiplier")
-    self.bipodSpreadProneMultiplier = self.dataContainer.GetFloat("bipodSpreadProneMultiplier")
+
+    self.bipodKickbackMultiplier = self.dataContainer.GetFloat("bipodKickbackMultiplier")
+    self.bipodSnapMultiplier = self.dataContainer.GetFloat("bipodSnapMultiplier")
+    self.bipodSpreadMultiplier = self.dataContainer.GetFloat("bipodSpreadMultiplier")
 
     self.stateValues = {}
     for match in (self.dataContainer.GetString("stateValues") .. " "):gmatch("(.-) ") do
@@ -36,20 +36,28 @@ function SimpleBipod:Start()
 
     self.anchor = self.gameObject.transform.Find("BipodObject")
 
-    self.origKickbackProne = self.weapon.recoilKickbackProneMultiplier
-    self.origSnapProne = self.weapon.recoilSnapProneMultiplier
-    
+    self.origBaseKickback = self.weapon.recoilBaseKickback
+    self.origRandomKickback = self.weapon.recoilRandomKickback
+    self.origSnapMagnitude = self.weapon.recoilSnapMagnitude
+
     if self.weapon.followupSpread ~= nil then
-        self.origMaxSpreadAim = self.weapon.followupSpread.maxSpreadAim
-        self.origMaxSpreadHip = self.weapon.followupSpread.maxSpreadHip
-        self.origSpreadGain = self.weapon.followupSpread.spreadGain
-        self.origSpreadStayTime = self.weapon.followupSpread.spreadStayTime
-        self.origSpreadDissipateTime = self.weapon.followupSpread.spreadDissipateTime
-        self.origSpreadProne = self.weapon.followupSpread.proneMultiplier
+        local spreadData = self.weapon.followupSpread
+        self.origMaxSpreadAim = spreadData.maxSpreadAim
+        self.origMaxSpreadHip = spreadData.maxSpreadHip
+        self.origSpreadGain = spreadData.spreadGain
+        self.origSpreadStayTime = spreadData.spreadStayTime
+        self.origSpreadDissipateTime = spreadData.spreadDissipateTime
+
+        spreadData.proneMultiplier = 1
+        self.weapon.followupSpread = spreadData
     end
 
+    self.weapon.recoilKickbackProneMultiplier = 1
+    self.weapon.recoilSnapProneMultiplier = 1
+
     self.isDeployed = false
-    
+    self.isGrounded = false
+
     self.hitTimer = 0
     self.missTimer = 0
 
@@ -66,10 +74,10 @@ function SimpleBipod:ChangeState(deploy)
     if self.isDeployed == deploy then return end
 
     self.isDeployed = deploy
-    
+
     self.hitTimer = 0
     self.missTimer = 0
-    
+
     if self.animator ~= nil then
         if deploy then
             self.animator.SetTrigger(self.deployTrigger)
@@ -78,24 +86,30 @@ function SimpleBipod:ChangeState(deploy)
         end
     end
 
-    if deploy then
-        self.weapon.recoilKickbackProneMultiplier = self.bipodKickbackProneMultiplier
-        self.weapon.recoilSnapProneMultiplier = self.bipodSnapProneMultiplier
-        
+    self:ApplyState()
+end
+
+function SimpleBipod:ApplyAccuracy(grounded)
+    if grounded then
+        self.weapon.recoilBaseKickback = self.origBaseKickback * self.bipodKickbackMultiplier
+        self.weapon.recoilRandomKickback = self.origRandomKickback * self.bipodKickbackMultiplier
+        self.weapon.recoilSnapMagnitude = self.origSnapMagnitude * self.bipodSnapMultiplier
+
         if self.weapon.followupSpread ~= nil then
             local spreadData = self.weapon.followupSpread
-            spreadData.maxSpreadAim = self.origMaxSpreadAim
-            spreadData.maxSpreadHip = self.origMaxSpreadHip
+            spreadData.maxSpreadAim = self.origMaxSpreadAim * self.bipodSpreadMultiplier
+            spreadData.maxSpreadHip = self.origMaxSpreadHip * self.bipodSpreadMultiplier
             spreadData.spreadGain = self.origSpreadGain
             spreadData.spreadStayTime = self.origSpreadStayTime
             spreadData.spreadDissipateTime = self.origSpreadDissipateTime
-            spreadData.proneMultiplier = self.bipodSpreadProneMultiplier
+            spreadData.proneMultiplier = 1
             self.weapon.followupSpread = spreadData
         end
     else
-        self.weapon.recoilKickbackProneMultiplier = self.origKickbackProne
-        self.weapon.recoilSnapProneMultiplier = self.origSnapProne
-        
+        self.weapon.recoilBaseKickback = self.origBaseKickback
+        self.weapon.recoilRandomKickback = self.origRandomKickback
+        self.weapon.recoilSnapMagnitude = self.origSnapMagnitude
+
         if self.weapon.followupSpread ~= nil then
             local spreadData = self.weapon.followupSpread
             spreadData.maxSpreadAim = self.origMaxSpreadAim
@@ -103,12 +117,10 @@ function SimpleBipod:ChangeState(deploy)
             spreadData.spreadGain = self.origSpreadGain
             spreadData.spreadStayTime = self.origSpreadStayTime
             spreadData.spreadDissipateTime = self.origSpreadDissipateTime
-            spreadData.proneMultiplier = self.origSpreadProne
+            spreadData.proneMultiplier = 1
             self.weapon.followupSpread = spreadData
         end
     end
-
-    self:ApplyState()
 end
 
 function SimpleBipod:OnEnable()
@@ -122,9 +134,16 @@ function SimpleBipod:Update()
     local ray = Ray(self.anchor.position, Vector3.down)
     local hitInfo = Physics.Raycast(ray, self.raycastDistance, RaycastTarget.ActorWalkable)
 
+    local shouldBeGrounded = hitInfo and self.isDeployed
+
+    if shouldBeGrounded ~= self.isGrounded then
+        self.isGrounded = shouldBeGrounded
+        self:ApplyAccuracy(self.isGrounded)
+    end
+
     if hitInfo then
         self.missTimer = 0
-        
+
         if not self.isDeployed then
             self.hitTimer = self.hitTimer + Time.deltaTime
             if self.hitTimer >= self.detectionDelay then
@@ -135,7 +154,7 @@ function SimpleBipod:Update()
         end
     else
         self.hitTimer = 0
-        
+
         if self.isDeployed then
             self.missTimer = self.missTimer + Time.deltaTime
             if self.missTimer >= self.detectionDelay then
