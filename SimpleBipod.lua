@@ -71,6 +71,7 @@ function SimpleBipod:ApplyState()
 end
 
 function SimpleBipod:ChangeState(deploy)
+    if self.weapon.isReloading then return end
     if self.isDeployed == deploy then return end
 
     self.isDeployed = deploy
