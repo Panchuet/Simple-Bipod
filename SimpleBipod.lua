@@ -40,20 +40,13 @@ function SimpleBipod:Start()
     self.origRandomKickback = self.weapon.recoilRandomKickback
     self.origSnapMagnitude = self.weapon.recoilSnapMagnitude
 
-    if self.weapon.followupSpread ~= nil then
-        local spreadData = self.weapon.followupSpread
-        self.origMaxSpreadAim = spreadData.maxSpreadAim
-        self.origMaxSpreadHip = spreadData.maxSpreadHip
-        self.origSpreadGain = spreadData.spreadGain
-        self.origSpreadStayTime = spreadData.spreadStayTime
-        self.origSpreadDissipateTime = spreadData.spreadDissipateTime
-
-        spreadData.proneMultiplier = 1
-        self.weapon.followupSpread = spreadData
-    end
-
-    self.weapon.recoilKickbackProneMultiplier = 1
-    self.weapon.recoilSnapProneMultiplier = 1
+    local spreadData = self.weapon.followupSpread
+    self.origMaxSpreadAim = spreadData.maxSpreadAim
+    self.origMaxSpreadHip = spreadData.maxSpreadHip
+    self.origSpreadGain = spreadData.spreadGain
+    self.origSpreadStayTime = spreadData.spreadStayTime
+    self.origSpreadDissipateTime = spreadData.spreadDissipateTime
+    self.origProneMultiplier = spreadData.proneMultiplier
 
     self.isDeployed = false
     self.isGrounded = false
@@ -96,31 +89,27 @@ function SimpleBipod:ApplyAccuracy(grounded)
         self.weapon.recoilRandomKickback = self.origRandomKickback * self.bipodKickbackMultiplier
         self.weapon.recoilSnapMagnitude = self.origSnapMagnitude * self.bipodSnapMultiplier
 
-        if self.weapon.followupSpread ~= nil then
-            local spreadData = self.weapon.followupSpread
-            spreadData.maxSpreadAim = self.origMaxSpreadAim * self.bipodSpreadMultiplier
-            spreadData.maxSpreadHip = self.origMaxSpreadHip * self.bipodSpreadMultiplier
-            spreadData.spreadGain = self.origSpreadGain
-            spreadData.spreadStayTime = self.origSpreadStayTime
-            spreadData.spreadDissipateTime = self.origSpreadDissipateTime
-            spreadData.proneMultiplier = 1
-            self.weapon.followupSpread = spreadData
-        end
+        local spreadData = self.weapon.followupSpread
+        spreadData.maxSpreadAim = self.origMaxSpreadAim * self.bipodSpreadMultiplier
+        spreadData.maxSpreadHip = self.origMaxSpreadHip * self.bipodSpreadMultiplier
+        spreadData.spreadGain = self.origSpreadGain
+        spreadData.spreadStayTime = self.origSpreadStayTime
+        spreadData.spreadDissipateTime = self.origSpreadDissipateTime
+        spreadData.proneMultiplier = self.origProneMultiplier
+        self.weapon.followupSpread = spreadData
     else
         self.weapon.recoilBaseKickback = self.origBaseKickback
         self.weapon.recoilRandomKickback = self.origRandomKickback
         self.weapon.recoilSnapMagnitude = self.origSnapMagnitude
 
-        if self.weapon.followupSpread ~= nil then
-            local spreadData = self.weapon.followupSpread
-            spreadData.maxSpreadAim = self.origMaxSpreadAim
-            spreadData.maxSpreadHip = self.origMaxSpreadHip
-            spreadData.spreadGain = self.origSpreadGain
-            spreadData.spreadStayTime = self.origSpreadStayTime
-            spreadData.spreadDissipateTime = self.origSpreadDissipateTime
-            spreadData.proneMultiplier = 1
-            self.weapon.followupSpread = spreadData
-        end
+        local spreadData = self.weapon.followupSpread
+        spreadData.maxSpreadAim = self.origMaxSpreadAim
+        spreadData.maxSpreadHip = self.origMaxSpreadHip
+        spreadData.spreadGain = self.origSpreadGain
+        spreadData.spreadStayTime = self.origSpreadStayTime
+        spreadData.spreadDissipateTime = self.origSpreadDissipateTime
+        spreadData.proneMultiplier = self.origProneMultiplier
+        self.weapon.followupSpread = spreadData
     end
 end
 
